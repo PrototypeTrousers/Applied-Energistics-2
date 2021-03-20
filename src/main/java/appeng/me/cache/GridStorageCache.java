@@ -22,7 +22,6 @@ package appeng.me.cache;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -55,6 +54,7 @@ import appeng.me.helpers.GenericInterestManager;
 import appeng.me.helpers.MachineSource;
 import appeng.me.storage.ItemWatcher;
 import appeng.me.storage.NetworkInventoryHandler;
+import it.unimi.dsi.fastutil.objects.Reference2ReferenceOpenHashMap;
 
 
 public class GridStorageCache implements IStorageGrid
@@ -72,8 +72,8 @@ public class GridStorageCache implements IStorageGrid
 	public GridStorageCache( final IGrid g )
 	{
 		this.myGrid = g;
-		this.storageNetworks = new IdentityHashMap<>();
-		this.storageMonitors = new IdentityHashMap<>();
+		this.storageNetworks = new Reference2ReferenceOpenHashMap<>();
+		this.storageMonitors = new Reference2ReferenceOpenHashMap<>();
 
 		AEApi.instance().storage().storageChannels().forEach( channel -> this.storageMonitors.put( channel, new NetworkMonitor<>( this, channel ) ) );
 	}

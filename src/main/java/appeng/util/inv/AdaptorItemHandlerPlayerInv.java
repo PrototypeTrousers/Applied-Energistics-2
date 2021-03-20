@@ -49,7 +49,8 @@ public class AdaptorItemHandlerPlayerInv extends AdaptorItemHandler
 		for( int slot = 0; slot < this.itemHandler.getSlots(); slot++ )
 		{
 			ItemStack is = this.itemHandler.getStackInSlot( slot );
-
+			if (is.getCount() == Math.min(this.itemHandler.getSlotLimit( slot ),is.getMaxStackSize()))
+				continue;
 			if( Platform.itemComparisons().isSameItem( is, left ) )
 			{
 				left = this.itemHandler.insertItem( slot, left, simulate );
@@ -62,6 +63,9 @@ public class AdaptorItemHandlerPlayerInv extends AdaptorItemHandler
 
 		for( int slot = 0; slot < this.itemHandler.getSlots(); slot++ )
 		{
+			ItemStack stack = this.itemHandler.getStackInSlot( slot );
+			if (stack.getCount() == Math.min(this.itemHandler.getSlotLimit( slot ),stack.getMaxStackSize()))
+				continue;
 			left = this.itemHandler.insertItem( slot, left, simulate );
 			if( left.isEmpty() )
 			{

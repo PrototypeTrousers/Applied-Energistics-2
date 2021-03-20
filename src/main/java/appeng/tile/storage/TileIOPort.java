@@ -19,10 +19,10 @@
 package appeng.tile.storage;
 
 
-import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 
+import it.unimi.dsi.fastutil.objects.Reference2ReferenceOpenHashMap;
 import net.minecraft.block.Block;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
@@ -368,7 +368,7 @@ public class TileIOPort extends AENetworkInvTile implements IUpgradeableHost, IC
 		if( this.currentCell != is )
 		{
 			this.currentCell = is;
-			this.cachedInventories = new IdentityHashMap<>();
+			this.cachedInventories = new Reference2ReferenceOpenHashMap<>();
 
 			for( IStorageChannel<? extends IAEStack<?>> c : AEApi.instance().storage().storageChannels() )
 			{

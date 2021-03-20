@@ -19,7 +19,6 @@
 package appeng.core.features.registries.charger;
 
 
-import java.util.IdentityHashMap;
 import java.util.Map;
 
 import javax.annotation.Nonnegative;
@@ -27,6 +26,7 @@ import javax.annotation.Nonnull;
 
 import com.google.common.base.Preconditions;
 
+import it.unimi.dsi.fastutil.objects.Reference2ReferenceOpenHashMap;
 import net.minecraft.item.Item;
 
 import appeng.api.features.IChargerRegistry;
@@ -41,7 +41,7 @@ public class ChargerRegistry implements IChargerRegistry
 
 	public ChargerRegistry()
 	{
-		this.chargeRates = new IdentityHashMap<>();
+		this.chargeRates = new Reference2ReferenceOpenHashMap<>();
 	}
 
 	@Override

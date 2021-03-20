@@ -23,12 +23,12 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 
 import io.netty.buffer.ByteBuf;
 
+import it.unimi.dsi.fastutil.objects.Reference2ReferenceOpenHashMap;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraftforge.items.IItemHandler;
@@ -100,7 +100,7 @@ public class TileDrive extends AENetworkInvTile implements IChestOrDrive, IPrior
 		this.mySrc = new MachineSource( this );
 		this.getProxy().setFlags( GridFlags.REQUIRE_CHANNEL );
 		this.inv.setFilter( new CellValidInventoryFilter() );
-		this.inventoryHandlers = new IdentityHashMap<>();
+		this.inventoryHandlers = new Reference2ReferenceOpenHashMap<>();
 	}
 
 	@Override

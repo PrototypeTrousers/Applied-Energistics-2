@@ -234,6 +234,9 @@ public class AdaptorItemHandler extends InventoryAdaptor
 
 		for( int slot = 0; slot < this.itemHandler.getSlots(); slot++ )
 		{
+			ItemStack stack = this.itemHandler.getStackInSlot( slot );
+			if (stack.getCount() == Math.min(this.itemHandler.getSlotLimit( slot ),stack.getMaxStackSize()))
+				continue;
 			left = this.itemHandler.insertItem( slot, left, simulate );
 
 			if( left.isEmpty() )

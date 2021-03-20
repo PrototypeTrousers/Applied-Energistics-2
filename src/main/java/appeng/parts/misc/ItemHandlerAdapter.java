@@ -85,6 +85,9 @@ class ItemHandlerAdapter implements IMEInventory<IAEItemStack>, IBaseMonitor<IAE
 		// This uses a brute force approach and tries to jam it in every slot the inventory exposes.
 		for( int i = 0; i < slotCount && !remaining.isEmpty(); i++ )
 		{
+			ItemStack stack = this.itemHandler.getStackInSlot( i );
+			if (stack.getCount() == Math.min(this.itemHandler.getSlotLimit( i ),stack.getMaxStackSize()))
+				continue;
 			remaining = this.itemHandler.insertItem( i, remaining, simulate );
 		}
 
