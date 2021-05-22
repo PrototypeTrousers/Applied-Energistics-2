@@ -93,7 +93,6 @@ class RecipeTransferHandler<T extends Container> implements IRecipeTransferHandl
 					if( recipeType.equals( VanillaRecipeCategoryUid.CRAFTING ) )
 					{
 						NetworkHandler.instance().sendToServer( new PacketValueConfig( "PatternTerminal.CraftMode", "1" ) );
-						( (ContainerPatternTerm) container ).setCraftingMode( true );
 					}
 				}
 				else if( !recipeType.equals( VanillaRecipeCategoryUid.CRAFTING ) )
