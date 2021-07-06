@@ -340,18 +340,10 @@ public class NetworkMonitor<T extends IAEStack<T>> implements IMEMonitor<T>
 		if( myChannel == AEApi.instance().storage().getStorageChannel( IItemStorageChannel.class ) )
 		{
 			gridItemCount = 0;
-			for( IAEItemStack iaeItemStack : (Iterable<IAEItemStack>) getStorageList() )
-			{
-				gridItemCount += iaeItemStack.getStackSize();
-			}
 		}
 		else if( myChannel == AEApi.instance().storage().getStorageChannel( IFluidStorageChannel.class ) )
 		{
 			gridFluidCount = 0;
-			for( IAEFluidStack iaeFluidStack : (Iterable<IAEFluidStack>) getStorageList() )
-			{
-				gridFluidCount += iaeFluidStack.getStackSize();
-			}
 		}
 
 		final Iterator<Entry<IMEMonitorHandlerReceiver<T>, Object>> i = this.getListeners();
