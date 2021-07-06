@@ -27,6 +27,7 @@ import java.util.Map;
 
 import appeng.api.config.Settings;
 import appeng.api.config.StorageFilter;
+import appeng.me.GridAccessException;
 import appeng.parts.misc.PartStorageBus;
 import net.minecraftforge.fluids.FluidStack;
 import net.minecraftforge.fluids.capability.IFluidHandler;
@@ -95,6 +96,14 @@ public class FluidHandlerAdapter implements IMEInventory<IAEFluidStack>, IBaseMo
 			this.cache
 					.currentlyCached
 					.add( input.copy().setStackSize( wasFillled ));
+			try
+			{
+				this.proxyable.getProxy().getTick().alertDevice( this.proxyable.getProxy().getNode() );
+			}
+			catch( GridAccessException e )
+			{
+				e.printStackTrace();
+			}
 		}
 
 		fluidStack.amount = remaining;
@@ -119,10 +128,18 @@ public class FluidHandlerAdapter implements IMEInventory<IAEFluidStack>, IBaseMo
 		IAEFluidStack gatheredAEFluidstack = AEFluidStack.fromFluidStack( gathered );
 		if( mode == Actionable.MODULATE )
 		{
-			IAEFluidStack e = this.cache.currentlyCached.findPrecise( gatheredAEFluidstack );
-			if (e != null)
+			IAEFluidStack extractedOnCache = this.cache.currentlyCached.findPrecise( gatheredAEFluidstack );
+			if (extractedOnCache != null)
 			{
-				e.decStackSize( gathered.amount );
+				extractedOnCache.decStackSize( gathered.amount );
+			}
+			try
+			{
+				this.proxyable.getProxy().getTick().alertDevice( this.proxyable.getProxy().getNode() );
+			}
+			catch( GridAccessException e )
+			{
+				e.printStackTrace();
 			}
 		}
 		return gatheredAEFluidstack;

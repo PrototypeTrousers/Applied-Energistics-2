@@ -33,6 +33,7 @@ import appeng.api.storage.channels.IItemStorageChannel;
 import appeng.api.storage.data.IAEItemStack;
 import appeng.api.storage.data.IItemList;
 import appeng.core.AELog;
+import appeng.me.GridAccessException;
 import appeng.me.helpers.IGridProxyable;
 import appeng.me.storage.ITickingMonitor;
 import appeng.util.inv.ItemHandlerIterator;
@@ -120,6 +121,14 @@ class ItemHandlerAdapter implements IMEInventory<IAEItemStack>, IBaseMonitor<IAE
 			this.cache
 					.currentlyCached
 					.add( AEItemStack.fromItemStack( orgInput ).setStackSize( orgInput.getCount() - remaining.getCount() ) );
+			try
+			{
+				this.proxyable.getProxy().getTick().alertDevice( this.proxyable.getProxy().getNode() );
+			}
+			catch( GridAccessException e )
+			{
+				e.printStackTrace();
+			}
 		}
 
 		return AEItemStack.fromItemStack( remaining );
@@ -193,10 +202,18 @@ class ItemHandlerAdapter implements IMEInventory<IAEItemStack>, IBaseMonitor<IAE
 			IAEItemStack gatheredAEItemStack = AEItemStack.fromItemStack( gathered );
 			if( mode == Actionable.MODULATE )
 			{
-				IAEItemStack e = this.cache.currentlyCached.findPrecise( gatheredAEItemStack );
-				if (e != null)
+				IAEItemStack extractedOnCache = this.cache.currentlyCached.findPrecise( gatheredAEItemStack );
+				if (extractedOnCache != null)
 				{
-					e.decStackSize( gathered.getCount() );
+					extractedOnCache.decStackSize( gathered.getCount() );
+				}
+				try
+				{
+					this.proxyable.getProxy().getTick().alertDevice( this.proxyable.getProxy().getNode() );
+				}
+				catch( GridAccessException e )
+				{
+					e.printStackTrace();
 				}
 			}
 
