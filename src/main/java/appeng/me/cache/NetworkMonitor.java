@@ -301,7 +301,6 @@ public class NetworkMonitor<T extends IAEStack<T>> implements IMEMonitor<T>
 			}
 
 			incGridCurrentCount( difference.getStackSize() );
-			this.cachedList.add( difference );
 
 			if( this.myGridCache.getInterestManager().containsKey( changedItem ) )
 			{
