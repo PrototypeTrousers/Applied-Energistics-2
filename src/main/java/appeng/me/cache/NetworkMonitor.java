@@ -262,7 +262,7 @@ public class NetworkMonitor<T extends IAEStack<T>> implements IMEMonitor<T>
 		{
 			final Entry<IMEMonitorHandlerReceiver<T>, Object> o = i.next();
 			final IMEMonitorHandlerReceiver<T> receiver = o.getKey();
-			if( receiver.isValid( o.getValue() ) && receiver.hasListeners() )
+			if( receiver.isValid( o.getValue() ) )
 			{
 				receiver.postChange( this, diff, src );
 			}

@@ -72,7 +72,7 @@ public class MEMonitorPassThrough<T extends IAEStack<T>> extends MEPassThrough<T
 		final IItemList<T> after = this.getInternal() == null ? this.getWrappedChannel().createList() : this.getInternal()
 				.getAvailableItems( new ItemListIgnoreCrafting( this.getWrappedChannel().createList() ) );
 
-		if( this.monitor != null )
+		if( this.monitor != null && this.listeners.size() > 0 )
 		{
 			this.monitor.addListener( this, this.monitor );
 		}
@@ -122,12 +122,6 @@ public class MEMonitorPassThrough<T extends IAEStack<T>> extends MEPassThrough<T
 	public boolean isValid( final Object verificationToken )
 	{
 		return verificationToken == this.monitor;
-	}
-
-	@Override
-	public boolean hasListeners()
-	{
-		return this.listeners.size() > 0;
 	}
 
 	@Override

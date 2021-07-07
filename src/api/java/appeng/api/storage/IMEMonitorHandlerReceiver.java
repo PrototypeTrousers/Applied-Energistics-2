@@ -53,8 +53,4 @@ public interface IMEMonitorHandlerReceiver<T extends IAEStack<T>>
 	 */
 	void onListUpdate();
 
-	default boolean hasListeners()
-	{
-		return true;
-	}
 }
