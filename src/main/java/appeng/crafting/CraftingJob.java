@@ -311,7 +311,7 @@ public class CraftingJob implements Runnable, ICraftingJob
 	/**
 	 * @return true if this needs more simulation
 	 */
-	public boolean simulateFor(final int milli)
+	public boolean simulateFor( final int milli )
 	{
 		this.time = milli;
 
@@ -325,25 +325,10 @@ public class CraftingJob implements Runnable, ICraftingJob
 			{
 				this.watch.reset();
 				this.watch.start();
-				this.running = true;
-
-				AELog.craftingDebug( "main thread is now going to sleep" );
-
 				this.monitor.notify();
-
-				while ( this.running )
-				{
-					try
-					{
-						this.monitor.wait();
-					}
-					catch( final InterruptedException ignored )
-					{
-					}
-				}
-
-				AELog.craftingDebug( "main thread is now active" );
 			}
+
+			this.running = true;
 		}
 
 		return true;
