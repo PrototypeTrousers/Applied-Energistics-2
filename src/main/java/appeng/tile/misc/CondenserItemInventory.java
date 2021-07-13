@@ -62,6 +62,7 @@ class CondenserItemInventory implements IMEMonitor<IAEItemStack>, ITickingMonito
 		if( mode == Actionable.MODULATE && input != null )
 		{
 			this.target.addPower( input.getStackSize() );
+			this.changeSet.add( input.copy().setStackSize( -input.getStackSize() ) );
 		}
 		return null;
 	}

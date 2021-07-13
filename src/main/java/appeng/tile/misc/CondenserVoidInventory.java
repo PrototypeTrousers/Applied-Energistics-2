@@ -22,23 +22,37 @@ package appeng.tile.misc;
 import appeng.api.config.AccessRestriction;
 import appeng.api.config.Actionable;
 import appeng.api.networking.security.IActionSource;
+import appeng.api.networking.ticking.TickRateModulation;
 import appeng.api.storage.IMEMonitor;
 import appeng.api.storage.IMEMonitorHandlerReceiver;
 import appeng.api.storage.IStorageChannel;
+import appeng.api.storage.data.IAEItemStack;
 import appeng.api.storage.data.IAEStack;
 import appeng.api.storage.data.IItemList;
+import appeng.me.helpers.BaseActionSource;
+import appeng.me.storage.ITickingMonitor;
+import appeng.util.item.AEStack;
+import appeng.util.item.ItemList;
+
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
 
 
-class CondenserVoidInventory<T extends IAEStack<T>> implements IMEMonitor<T>
+class CondenserVoidInventory<T extends IAEStack<T>> implements IMEMonitor<T>, ITickingMonitor
 {
 
+	private final HashMap<IMEMonitorHandlerReceiver<T>, Object> listeners = new HashMap<>();
 	private final TileCondenser target;
 	private final IStorageChannel<T> channel;
+	private IActionSource actionSource = new BaseActionSource();
+	private IItemList<T> changeSet;
 
 	CondenserVoidInventory( final TileCondenser te, final IStorageChannel<T> channel )
 	{
 		this.target = te;
 		this.channel = channel;
+		changeSet = channel.createList();
 	}
 
 	@Override
@@ -52,6 +66,7 @@ class CondenserVoidInventory<T extends IAEStack<T>> implements IMEMonitor<T>
 		if( input != null )
 		{
 			this.target.addPower( input.getStackSize() / (double) this.channel.transferFactor() );
+			this.changeSet.add( input.copy().setStackSize( -input.getStackSize() ) );
 		}
 		return null;
 	}
@@ -117,14 +132,50 @@ class CondenserVoidInventory<T extends IAEStack<T>> implements IMEMonitor<T>
 	}
 
 	@Override
-	public void addListener( IMEMonitorHandlerReceiver<T> l, Object verificationToken )
+	public void addListener( final IMEMonitorHandlerReceiver<T> l, final Object verificationToken )
 	{
-		// Not implemented since the Condenser automatically voids everything, and there are no updates
+		this.listeners.put( l, verificationToken );
 	}
 
 	@Override
-	public void removeListener( IMEMonitorHandlerReceiver<T> l )
+	public void removeListener( final IMEMonitorHandlerReceiver<T> l )
 	{
-		// Not implemented since we don't remember registered listeners anyway
+		this.listeners.remove( l );
+	}
+
+	@Override
+	public TickRateModulation onTick()
+	{
+
+		if( this.changeSet.isEmpty() )
+		{
+			return TickRateModulation.IDLE;
+		}
+
+		final Iterable<T> currentChanges = this.changeSet;
+		this.changeSet = channel.createList();
+
+		final Iterator<Map.Entry<IMEMonitorHandlerReceiver<T>, Object>> i = this.listeners.entrySet().iterator();
+		while( i.hasNext() )
+		{
+			final Map.Entry<IMEMonitorHandlerReceiver<T>, Object> l = i.next();
+			final IMEMonitorHandlerReceiver<T> key = l.getKey();
+			if( key.isValid( l.getValue() ) )
+			{
+				key.postChange( this, currentChanges, this.actionSource );
+			}
+			else
+			{
+				i.remove();
+			}
+		}
+
+		return TickRateModulation.URGENT;
+	}
+
+	@Override
+	public void setActionSource( IActionSource actionSource )
+	{
+		this.actionSource = actionSource;
 	}
 }
