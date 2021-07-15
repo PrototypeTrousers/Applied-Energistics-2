@@ -19,6 +19,10 @@
 package appeng.me.storage;
 
 
+import appeng.me.GridAccessException;
+import appeng.me.helpers.MachineSource;
+import appeng.tile.storage.TileDrive;
+import com.google.common.collect.ImmutableList;
 import net.minecraft.item.ItemStack;
 
 import appeng.api.config.Actionable;
@@ -70,7 +74,7 @@ public class DriveWatcher<T extends IAEStack<T>> extends MEInventoryHandler<T>
 			}
 			try
 			{
-				(( TileDrive )this.cord).getProxy().getStorage().postAlterationOfStoredItems( this.getChannel(), ImmutableList.of( input.copy().setStackSize( input.getStackSize() - ( a == null ? 0 : a.getStackSize() ) ) ),this.source );
+				( (TileDrive) this.cord ).getProxy().getStorage().postAlterationOfStoredItems( this.getChannel(), ImmutableList.of( input.copy().setStackSize( input.getStackSize() - ( a == null ? 0 : a.getStackSize() ) ) ), this.source );
 			}
 			catch( GridAccessException e )
 			{
@@ -98,7 +102,7 @@ public class DriveWatcher<T extends IAEStack<T>> extends MEInventoryHandler<T>
 
 			try
 			{
-				(( TileDrive )this.cord).getProxy().getStorage().postAlterationOfStoredItems( this.getChannel(), ImmutableList.of( request.copy().setStackSize( -request.getStackSize() ) ),this.source );
+				( (TileDrive) this.cord ).getProxy().getStorage().postAlterationOfStoredItems( this.getChannel(), ImmutableList.of( request.copy().setStackSize( -request.getStackSize() ) ), this.source );
 			}
 			catch( GridAccessException e )
 			{

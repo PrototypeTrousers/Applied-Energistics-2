@@ -90,16 +90,7 @@ public class NetworkMonitor<T extends IAEStack<T>> implements IMEMonitor<T>
 	@Override
 	public T extractItems( final T request, final Actionable mode, final IActionSource src )
 	{
-		if( mode == Actionable.SIMULATE )
-		{
-			return this.getHandler().extractItems( request, mode, src );
-		}
-
-		this.localDepthSemaphore++;
-		final T leftover = this.getHandler().extractItems( request, mode, src );
-		this.localDepthSemaphore--;
-
-		return leftover;
+		return this.getHandler().extractItems( request, mode, src );
 	}
 
 	@Override
@@ -175,16 +166,7 @@ public class NetworkMonitor<T extends IAEStack<T>> implements IMEMonitor<T>
 	@Override
 	public T injectItems( final T input, final Actionable mode, final IActionSource src )
 	{
-		if( mode == Actionable.SIMULATE )
-		{
-			return this.getHandler().injectItems( input, mode, src );
-		}
-
-		this.localDepthSemaphore++;
-		final T leftover = this.getHandler().injectItems( input, mode, src );
-		this.localDepthSemaphore--;
-
-		return leftover;
+		return this.getHandler().injectItems( input, mode, src );
 	}
 
 	@Override
@@ -238,9 +220,12 @@ public class NetworkMonitor<T extends IAEStack<T>> implements IMEMonitor<T>
 
 	protected void postChange( final boolean add, final Iterable<T> changes, final IActionSource src )
 	{
+		if ( GLOBAL_DEPTH.contains( this ))
+		{
+			return;
+		}
 
 		GLOBAL_DEPTH.push( this );
-		this.localDepthSemaphore++;
 
 		this.sendEvent = true;
 
@@ -277,7 +262,6 @@ public class NetworkMonitor<T extends IAEStack<T>> implements IMEMonitor<T>
 		this.notifyListenersOfChange( changes, src );
 
 		final NetworkMonitor<?> last = GLOBAL_DEPTH.pop();
-		this.localDepthSemaphore--;
 
 		if( last != this )
 		{
