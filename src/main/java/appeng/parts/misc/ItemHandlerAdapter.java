@@ -118,9 +118,6 @@ class ItemHandlerAdapter implements IMEInventory<IAEItemStack>, IBaseMonitor<IAE
 
 		if( type == Actionable.MODULATE )
 		{
-			this.cache
-					.currentlyCached
-					.add( AEItemStack.fromItemStack( orgInput ).setStackSize( orgInput.getCount() - remaining.getCount() ) );
 			try
 			{
 				this.proxyable.getProxy().getTick().alertDevice( this.proxyable.getProxy().getNode() );
@@ -202,11 +199,6 @@ class ItemHandlerAdapter implements IMEInventory<IAEItemStack>, IBaseMonitor<IAE
 			IAEItemStack gatheredAEItemStack = AEItemStack.fromItemStack( gathered );
 			if( mode == Actionable.MODULATE )
 			{
-				IAEItemStack extractedOnCache = this.cache.currentlyCached.findPrecise( gatheredAEItemStack );
-				if (extractedOnCache != null)
-				{
-					extractedOnCache.decStackSize( gathered.getCount() );
-				}
 				try
 				{
 					this.proxyable.getProxy().getTick().alertDevice( this.proxyable.getProxy().getNode() );

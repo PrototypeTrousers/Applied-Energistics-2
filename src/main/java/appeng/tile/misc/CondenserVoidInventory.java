@@ -39,7 +39,7 @@ import java.util.Iterator;
 import java.util.Map;
 
 
-class CondenserVoidInventory<T extends IAEStack<T>> implements IMEMonitor<T>, ITickingMonitor
+class CondenserVoidInventory<T extends IAEStack<T>> implements IMEMonitor<T>
 {
 
 	private final HashMap<IMEMonitorHandlerReceiver<T>, Object> listeners = new HashMap<>();
@@ -66,7 +66,6 @@ class CondenserVoidInventory<T extends IAEStack<T>> implements IMEMonitor<T>, IT
 		if( input != null )
 		{
 			this.target.addPower( input.getStackSize() / (double) this.channel.transferFactor() );
-			this.changeSet.add( input.copy().setStackSize( -input.getStackSize() ) );
 		}
 		return null;
 	}
@@ -134,48 +133,13 @@ class CondenserVoidInventory<T extends IAEStack<T>> implements IMEMonitor<T>, IT
 	@Override
 	public void addListener( final IMEMonitorHandlerReceiver<T> l, final Object verificationToken )
 	{
-		this.listeners.put( l, verificationToken );
+		//
 	}
 
 	@Override
 	public void removeListener( final IMEMonitorHandlerReceiver<T> l )
 	{
-		this.listeners.remove( l );
+		//
 	}
 
-	@Override
-	public TickRateModulation onTick()
-	{
-
-		if( this.changeSet.isEmpty() )
-		{
-			return TickRateModulation.IDLE;
-		}
-
-		final Iterable<T> currentChanges = this.changeSet;
-		this.changeSet = channel.createList();
-
-		final Iterator<Map.Entry<IMEMonitorHandlerReceiver<T>, Object>> i = this.listeners.entrySet().iterator();
-		while( i.hasNext() )
-		{
-			final Map.Entry<IMEMonitorHandlerReceiver<T>, Object> l = i.next();
-			final IMEMonitorHandlerReceiver<T> key = l.getKey();
-			if( key.isValid( l.getValue() ) )
-			{
-				key.postChange( this, currentChanges, this.actionSource );
-			}
-			else
-			{
-				i.remove();
-			}
-		}
-
-		return TickRateModulation.URGENT;
-	}
-
-	@Override
-	public void setActionSource( IActionSource actionSource )
-	{
-		this.actionSource = actionSource;
-	}
 }

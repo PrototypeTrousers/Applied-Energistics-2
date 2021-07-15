@@ -36,6 +36,7 @@ public class DriveWatcher<T extends IAEStack<T>> extends MEInventoryHandler<T>
 	private final ItemStack is;
 	private final ICellHandler handler;
 	private final IChestOrDrive cord;
+	private IActionSource source;
 
 	public DriveWatcher( final ICellInventoryHandler<T> i, final ItemStack is, final ICellHandler han, final IChestOrDrive cod )
 	{
@@ -43,6 +44,7 @@ public class DriveWatcher<T extends IAEStack<T>> extends MEInventoryHandler<T>
 		this.is = is;
 		this.handler = han;
 		this.cord = cod;
+		this.source = new MachineSource( cod );
 	}
 
 	public int getStatus()
@@ -66,6 +68,14 @@ public class DriveWatcher<T extends IAEStack<T>> extends MEInventoryHandler<T>
 				this.cord.blinkCell( this.getSlot() );
 				this.oldStatus = newStatus;
 			}
+			try
+			{
+				(( TileDrive )this.cord).getProxy().getStorage().postAlterationOfStoredItems( this.getChannel(), ImmutableList.of( input.copy().setStackSize( input.getStackSize() - ( a == null ? 0 : a.getStackSize() ) ) ),this.source );
+			}
+			catch( GridAccessException e )
+			{
+				e.printStackTrace();
+			}
 		}
 
 		return a;
@@ -84,6 +94,15 @@ public class DriveWatcher<T extends IAEStack<T>> extends MEInventoryHandler<T>
 			{
 				this.cord.blinkCell( this.getSlot() );
 				this.oldStatus = newStatus;
+			}
+
+			try
+			{
+				(( TileDrive )this.cord).getProxy().getStorage().postAlterationOfStoredItems( this.getChannel(), ImmutableList.of( request.copy().setStackSize( -request.getStackSize() ) ),this.source );
+			}
+			catch( GridAccessException e )
+			{
+				e.printStackTrace();
 			}
 		}
 

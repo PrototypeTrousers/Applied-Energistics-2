@@ -88,7 +88,7 @@ import appeng.util.prioritylist.PrecisePriorityList;
  * @version rv6 - 22/05/2018
  * @since rv6 22/05/2018
  */
-public class PartFluidStorageBus extends PartSharedStorageBus implements IMEMonitorHandlerReceiver<IAEFluidStack>, IAEFluidInventory, IConfigurableFluidInventory
+public class PartFluidStorageBus extends PartSharedStorageBus<IAEFluidStack> implements IAEFluidInventory, IConfigurableFluidInventory
 {
 	public static final ResourceLocation MODEL_BASE = new ResourceLocation( AppEng.MOD_ID, "part/fluid_storage_bus_base" );
 	@PartModels
@@ -98,31 +98,21 @@ public class PartFluidStorageBus extends PartSharedStorageBus implements IMEMoni
 	@PartModels
 	public static final IPartModel MODELS_HAS_CHANNEL = new PartModel( MODEL_BASE, new ResourceLocation( AppEng.MOD_ID, "part/fluid_storage_bus_has_channel" ) );
 
-	private final IActionSource source;
 	private final AEFluidInventory config = new AEFluidInventory( this, 63 );
-	private boolean cached = false;
-	private ITickingMonitor monitor = null;
-	private MEInventoryHandler<IAEFluidStack> handler = null;
-	private int handlerHash = 0;
-	private byte resetCacheLogic = 0;
 
 	public PartFluidStorageBus( ItemStack is )
 	{
 		super( is );
-		this.getConfigManager().registerSetting( Settings.ACCESS, AccessRestriction.READ_WRITE );
-		this.getConfigManager().registerSetting( Settings.FUZZY_MODE, FuzzyMode.IGNORE_ALL );
-		this.getConfigManager().registerSetting( Settings.STORAGE_FILTER, StorageFilter.EXTRACTABLE_ONLY );
-		this.source = new MachineSource( this );
 	}
 
-	private IMEInventory<IAEFluidStack> getInventoryWrapper( TileEntity target )
+	protected IMEInventory<IAEFluidStack> getInventoryWrapper( TileEntity target )
 	{
 		EnumFacing targetSide = this.getSide().getFacing().getOpposite();
 		// Prioritize a handler to directly link to another ME network
 		IStorageMonitorableAccessor accessor = target.getCapability( Capabilities.STORAGE_MONITORABLE_ACCESSOR, targetSide );
 		if( accessor != null )
 		{
-			IStorageMonitorable inventory = accessor.getInventory( this.source );
+			IStorageMonitorable inventory = accessor.getInventory( this.mySrc );
 			if( inventory != null )
 			{
 				return inventory.getInventory( AEApi.instance().storage().getStorageChannel( IFluidStorageChannel.class ) );
@@ -143,83 +133,6 @@ public class PartFluidStorageBus extends PartSharedStorageBus implements IMEMoni
 		}
 
 		return null;
-	}
-
-	@Override
-	public TickRateModulation tickingRequest( IGridNode node, int ticksSinceLastCall )
-	{
-		if( this.resetCacheLogic != 0 )
-		{
-			this.resetCache();
-		}
-
-		if( this.monitor != null )
-		{
-			return this.monitor.onTick();
-		}
-
-		return TickRateModulation.SLEEP;
-	}
-
-	@Override
-	protected void resetCache()
-	{
-		final boolean fullReset = this.resetCacheLogic == 2;
-		this.resetCacheLogic = 0;
-
-		final IMEInventory<IAEFluidStack> in = this.getInternalHandler();
-		IItemList<IAEFluidStack> before = AEApi.instance().storage().getStorageChannel( IFluidStorageChannel.class ).createList();
-		if( in != null )
-		{
-			before = in.getAvailableItems( before );
-		}
-
-		this.cached = false;
-		if( fullReset )
-		{
-			this.handlerHash = 0;
-		}
-
-		final IMEInventory<IAEFluidStack> out = this.getInternalHandler();
-
-		if( in != out )
-		{
-			IItemList<IAEFluidStack> after = AEApi.instance().storage().getStorageChannel( IFluidStorageChannel.class ).createList();
-			if( out != null )
-			{
-				after = out.getAvailableItems( after );
-			}
-			Platform.postListChanges( before, after, this, this.source );
-		}
-	}
-
-	@Override
-	protected void resetCache( final boolean fullReset )
-	{
-		if( this.getHost() == null || this.getHost().getTile() == null || this.getHost().getTile().getWorld() == null || this.getHost()
-				.getTile()
-				.getWorld().isRemote )
-		{
-			return;
-		}
-
-		if( fullReset )
-		{
-			this.resetCacheLogic = 2;
-		}
-		else
-		{
-			this.resetCacheLogic = 1;
-		}
-
-		try
-		{
-			this.getProxy().getTick().alertDevice( this.getProxy().getNode() );
-		}
-		catch( final GridAccessException e )
-		{
-			// :P
-		}
 	}
 
 	@Override
@@ -255,27 +168,6 @@ public class PartFluidStorageBus extends PartSharedStorageBus implements IMEMoni
 		this.config.writeToNBT( data, "config" );
 	}
 
-	@Override
-	public boolean isValid( final Object verificationToken )
-	{
-		return this.handler == verificationToken;
-	}
-
-	@Override
-	public void postChange( final IBaseMonitor<IAEFluidStack> monitor, final Iterable<IAEFluidStack> change, final IActionSource source )
-	{
-		try
-		{
-			if( this.getProxy().isActive() )
-			{
-				this.getProxy().getStorage().postAlterationOfStoredItems( AEApi.instance().storage().getStorageChannel( IFluidStorageChannel.class ), change, this.source );
-			}
-		}
-		catch( final GridAccessException e )
-		{
-			// :(
-		}
-	}
 
 	public MEInventoryHandler<IAEFluidStack> getInternalHandler()
 	{
@@ -310,8 +202,6 @@ public class PartFluidStorageBus extends PartSharedStorageBus implements IMEMoni
 
 			if( inv != null )
 			{
-				this.checkInterfaceVsStorageBus( target, this.getSide().getOpposite() );
-
 				this.handler = new MEInventoryHandler<>( inv, AEApi.instance().storage().getStorageChannel( IFluidStorageChannel.class ) );
 
 				this.handler.setBaseAccess( (AccessRestriction) this.getConfigManager().getSetting( Settings.ACCESS ) );
@@ -381,32 +271,6 @@ public class PartFluidStorageBus extends PartSharedStorageBus implements IMEMoni
 		return this.handler;
 	}
 
-	private void checkInterfaceVsStorageBus( final TileEntity target, final AEPartLocation side )
-	{
-		IInterfaceHost achievement = null;
-
-		if( target instanceof IInterfaceHost )
-		{
-			achievement = (IInterfaceHost) target;
-		}
-
-		if( target instanceof IPartHost )
-		{
-			final Object part = ( (IPartHost) target ).getPart( side );
-			if( part instanceof IInterfaceHost )
-			{
-				achievement = (IInterfaceHost) part;
-			}
-		}
-
-		if( achievement != null && achievement.getActionableNode() != null )
-		{
-			// Platform.addStat( achievement.getActionableNode().getPlayerID(), Achievements.Recursive.getAchievement()
-			// );
-			// Platform.addStat( getActionableNode().getPlayerID(), Achievements.Recursive.getAchievement() );
-		}
-	}
-
 	@Override
 	public List<IMEInventoryHandler> getCellArray( final IStorageChannel channel )
 	{
@@ -421,7 +285,7 @@ public class PartFluidStorageBus extends PartSharedStorageBus implements IMEMoni
 		return super.getCellArray( channel );
 	}
 
-	private int createHandlerHash( TileEntity target )
+	protected int createHandlerHash( TileEntity target )
 	{
 		if( target == null )
 		{
@@ -452,13 +316,7 @@ public class PartFluidStorageBus extends PartSharedStorageBus implements IMEMoni
 	}
 
 	@Override
-	public void onListUpdate()
-	{
-		// not used here.
-	}
-
-	@Override
-	public IStorageChannel getStorageChannel()
+	public IStorageChannel<IAEFluidStack> getStorageChannel()
 	{
 		return AEApi.instance().storage().getStorageChannel( IFluidStorageChannel.class );
 	}

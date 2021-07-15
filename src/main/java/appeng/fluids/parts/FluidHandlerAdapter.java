@@ -93,9 +93,6 @@ public class FluidHandlerAdapter implements IMEInventory<IAEFluidStack>, IBaseMo
 
 		if( type == Actionable.MODULATE )
 		{
-			this.cache
-					.currentlyCached
-					.add( input.copy().setStackSize( wasFillled ));
 			try
 			{
 				this.proxyable.getProxy().getTick().alertDevice( this.proxyable.getProxy().getNode() );
@@ -128,11 +125,6 @@ public class FluidHandlerAdapter implements IMEInventory<IAEFluidStack>, IBaseMo
 		IAEFluidStack gatheredAEFluidstack = AEFluidStack.fromFluidStack( gathered );
 		if( mode == Actionable.MODULATE )
 		{
-			IAEFluidStack extractedOnCache = this.cache.currentlyCached.findPrecise( gatheredAEFluidstack );
-			if (extractedOnCache != null)
-			{
-				extractedOnCache.decStackSize( gathered.amount );
-			}
 			try
 			{
 				this.proxyable.getProxy().getTick().alertDevice( this.proxyable.getProxy().getNode() );

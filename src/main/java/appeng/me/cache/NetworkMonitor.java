@@ -19,24 +19,10 @@
 package appeng.me.cache;
 
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Deque;
-import java.util.Iterator;
-import java.util.Map.Entry;
-
 import javax.annotation.Nonnegative;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-
 import appeng.api.AEApi;
-import appeng.api.storage.channels.IFluidStorageChannel;
-import appeng.api.storage.channels.IItemStorageChannel;
-import appeng.api.storage.data.IAEFluidStack;
-import appeng.api.storage.data.IAEItemStack;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Queues;
-
 import appeng.api.config.AccessRestriction;
 import appeng.api.config.Actionable;
 import appeng.api.networking.events.MENetworkStorageEvent;
@@ -45,11 +31,19 @@ import appeng.api.storage.IMEInventoryHandler;
 import appeng.api.storage.IMEMonitor;
 import appeng.api.storage.IMEMonitorHandlerReceiver;
 import appeng.api.storage.IStorageChannel;
+import appeng.api.storage.channels.IFluidStorageChannel;
+import appeng.api.storage.channels.IItemStorageChannel;
 import appeng.api.storage.data.IAEStack;
 import appeng.api.storage.data.IItemList;
 import appeng.me.storage.ItemWatcher;
+import com.google.common.collect.Queues;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+
+import java.util.Collection;
+import java.util.Deque;
+import java.util.Iterator;
+import java.util.Map.Entry;
 
 
 public class NetworkMonitor<T extends IAEStack<T>> implements IMEMonitor<T>
@@ -104,11 +98,6 @@ public class NetworkMonitor<T extends IAEStack<T>> implements IMEMonitor<T>
 		this.localDepthSemaphore++;
 		final T leftover = this.getHandler().extractItems( request, mode, src );
 		this.localDepthSemaphore--;
-
-		if( this.localDepthSemaphore == 0 )
-		{
-			this.monitorDifference( request.copy(), leftover, true, src );
-		}
 
 		return leftover;
 	}
@@ -195,11 +184,6 @@ public class NetworkMonitor<T extends IAEStack<T>> implements IMEMonitor<T>
 		final T leftover = this.getHandler().injectItems( input, mode, src );
 		this.localDepthSemaphore--;
 
-		if( this.localDepthSemaphore == 0 )
-		{
-			this.monitorDifference( input.copy(), leftover, false, src );
-		}
-
 		return leftover;
 	}
 
@@ -232,27 +216,6 @@ public class NetworkMonitor<T extends IAEStack<T>> implements IMEMonitor<T>
 		return this.listeners.entrySet().iterator();
 	}
 
-	private T monitorDifference( final IAEStack<T> original, final T leftOvers, final boolean extraction, final IActionSource src )
-	{
-		final T diff = original.copy();
-
-		if( extraction )
-		{
-			diff.setStackSize( leftOvers == null ? 0 : -leftOvers.getStackSize() );
-		}
-		else if( leftOvers != null )
-		{
-			diff.decStackSize( leftOvers.getStackSize() );
-		}
-
-		if( diff.getStackSize() != 0 )
-		{
-			this.postChangesToListeners( ImmutableList.of( diff ), src );
-		}
-
-		return leftOvers;
-	}
-
 	private void notifyListenersOfChange( final Iterable<T> diff, final IActionSource src )
 	{
 		this.hasChanged = true;
@@ -273,17 +236,8 @@ public class NetworkMonitor<T extends IAEStack<T>> implements IMEMonitor<T>
 		}
 	}
 
-	private void postChangesToListeners( final Iterable<T> changes, final IActionSource src )
-	{
-		this.postChange( true, changes, src );
-	}
-
 	protected void postChange( final boolean add, final Iterable<T> changes, final IActionSource src )
 	{
-		if( this.localDepthSemaphore > 0 || GLOBAL_DEPTH.contains( this ) )
-		{
-			return;
-		}
 
 		GLOBAL_DEPTH.push( this );
 		this.localDepthSemaphore++;
