@@ -22,6 +22,7 @@ import appeng.api.stacks.AEItemKey;
 import appeng.api.stacks.GenericStack;
 import appeng.api.stacks.KeyCounter;
 import appeng.core.AELog;
+import appeng.core.definitions.AEItems;
 import appeng.crafting.inv.CraftingSimulationState;
 import appeng.crafting.simulation.helpers.ProcessingPatternBuilder;
 import appeng.crafting.simulation.helpers.SimulationEnv;
@@ -201,6 +202,76 @@ public class CraftingSimulationTest {
     public void testDamagedOutput() {
         testDamagedOutput(false);
         testDamagedOutput(true);
+    }
+
+    @Test
+    public void nestedBucketUsed() {
+        var env = new SimulationEnv();
+
+        var emptyBucket = item(Items.BUCKET);
+        var waterBucket = item(Items.WATER_BUCKET);
+        var grass = item(Items.GRASS);
+        var dirt = item(Items.DIRT);
+        var water1000mb = fluid(Fluids.WATER, 1000);
+
+        var sand = item(Items.SAND);
+
+        var grassPattern = env.addPattern(new ProcessingPatternBuilder(grass)
+                .addPreciseInput(1, true, waterBucket)
+                .addPreciseInput(1, dirt)
+                .addPreciseInput(1, true, waterBucket)
+                .build());
+        var dirtPattern = env.addPattern(new ProcessingPatternBuilder(dirt)
+                .addPreciseInput(1, true, waterBucket)
+                .addPreciseInput(1, sand)
+                .addPreciseInput(1, true, waterBucket)
+                .build());
+        var bucketFilling = env.addPattern(new ProcessingPatternBuilder(waterBucket)
+                .addPreciseInput(1, emptyBucket)
+                .addPreciseInput(1, water1000mb)
+                .build());
+
+        env.addStoredItem(mult(emptyBucket, 2));
+        env.addStoredItem(mult(sand, 10000));
+        env.addEmitable(water1000mb.what());
+
+        var plan = env.runSimulation(mult(grass, 100), CalculationStrategy.REPORT_MISSING_ITEMS);
+        assertThatPlan(plan)
+                .succeeded()
+                .patternsMatch(dirtPattern, 100, grassPattern, 100, bucketFilling, 400)
+                .emittedMatch(mult(water1000mb, 400))
+                .usedMatch(mult(emptyBucket, 2), mult(sand, 100))
+                .bytesMatch(15, 1500, 400);
+        // the important thing is that the bucket was reused, so only 1 needed to be extracted from the network!
+    }
+
+    @Test
+    public void nestedKnifeUsed() {
+        var env = new SimulationEnv();
+
+        var qck = item(AEItems.CERTUS_QUARTZ_KNIFE.asItem());
+        var stone = item(Items.STONE);
+        var cobble = item(Items.COBBLESTONE);
+        var sand = item(Items.SAND);
+
+        var sandPattern = env.addPattern(new ProcessingPatternBuilder(sand)
+                .addDamageableInput(((AEItemKey) qck.what()).getItem())
+                .addPreciseInput(1, cobble)
+                .build());
+        var cobblePattern = env.addPattern(new ProcessingPatternBuilder(cobble)
+                .addDamageableInput(((AEItemKey) qck.what()).getItem())
+                .addPreciseInput(1, stone)
+                .build());
+
+        env.addStoredItem(mult(qck, 1));
+        env.addStoredItem(mult(stone, 10));
+
+        var plan = env.runSimulation(mult(sand, 10), CalculationStrategy.REPORT_MISSING_ITEMS);
+        assertThatPlan(plan)
+                .succeeded()
+                .patternsMatch(sandPattern, 10, cobblePattern, 10)
+                .usedMatch(qck, mult(stone, 10))
+                .bytesMatch(5, 50, 20);
     }
 
     public void testDamagedOutput(boolean branching) {

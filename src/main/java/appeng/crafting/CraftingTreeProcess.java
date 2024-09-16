@@ -39,6 +39,7 @@ public class CraftingTreeProcess {
     private final CraftingCalculation job;
     // Use linked hashmap to ensure deterministic ordering of subcrafts
     private final Map<CraftingTreeNode, Long> nodes = new LinkedHashMap<>();
+    private final Map<CraftingTreeNode, Long> containerNodes = new LinkedHashMap<>();
     boolean possible = true;
     private boolean containerItems;
     /**
@@ -60,8 +61,14 @@ public class CraftingTreeProcess {
         for (int x = 0; x < inputs.length; ++x) {
             var input = inputs[x];
             var firstInput = input.getPossibleInputs()[0];
-            this.nodes.put(new CraftingTreeNode(cc, job, firstInput.what(), firstInput.amount(), this, x),
-                    input.getMultiplier());
+            if (input.getRemainingKey(firstInput.what()) != null) {
+                this.containerNodes.put(new CraftingTreeNode(cc, job, firstInput.what(), firstInput.amount(), this, x),
+                        input.getMultiplier());
+                this.limitQty = this.containerItems = true;
+            } else {
+                this.nodes.put(new CraftingTreeNode(cc, job, firstInput.what(), firstInput.amount(), this, x),
+                        input.getMultiplier());
+            }
         }
     }
 
@@ -92,10 +99,6 @@ public class CraftingTreeProcess {
             if (isAnInput) {
                 this.limitQty = true;
             }
-
-            if (input.getRemainingKey(primaryInput.what()) != null) {
-                this.limitQty = this.containerItems = true;
-            }
         }
     }
 
@@ -111,6 +114,11 @@ public class CraftingTreeProcess {
 
         // request and remove inputs...
         for (var entry : this.nodes.entrySet()) {
+            entry.getKey().request(inv, entry.getValue() * times, containerItems);
+        }
+
+        // request and remove inputs...
+        for (var entry : this.containerNodes.entrySet()) {
             entry.getKey().request(inv, entry.getValue() * times, containerItems);
         }
 
@@ -140,6 +148,10 @@ public class CraftingTreeProcess {
             tot += node.getNodeCount();
         }
 
+        for (CraftingTreeNode node : this.containerNodes.keySet()) {
+            tot += node.getNodeCount();
+        }
+
         return tot;
     }
 
@@ -157,6 +169,11 @@ public class CraftingTreeProcess {
 
     boolean hasMultiplePaths() {
         for (var entry : nodes.entrySet()) {
+            if (entry.getKey().hasMultiplePaths()) {
+                return true;
+            }
+        }
+        for (var entry : containerNodes.entrySet()) {
             if (entry.getKey().hasMultiplePaths()) {
                 return true;
             }
