@@ -132,7 +132,7 @@ public abstract class AbstractTableRenderer<T> {
                         && mouseY >= cellY && mouseY <= cellY + CELL_HEIGHT) {
                     tooltipLines = getEntryTooltip(entry);
                     hovered = new StackWithBounds(
-                            new GenericStack(entryStack, 0),
+                            new GenericStack(entryStack, 1),
                             new Rect2i(screen.getGuiLeft() + cellX, screen.getGuiTop() + cellY, CELL_WIDTH,
                                     CELL_HEIGHT));
                 }
